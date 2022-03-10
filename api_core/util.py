@@ -3,7 +3,6 @@ import numpy as np
 import random
 import Helpers as hp
 
-
 def convert(size, box):
     """
     坐标转换为yolo需要的格式
