@@ -49,6 +49,17 @@ def check_dir(dir):
     if not os.path.exists(dir):
         os.makedirs(dir)
 
+def read_classes_txt(txt_path):
+    """
+    读取classes.txt并返回dict
+    txt_path:txt路径
+    """
+    labels = [f.strip() for f in open(txt_path,encoding='utf-8').readlines()]
+    labels_dict = {}
+    for i,label in zip(range(len(labels)),labels):
+        labels_dict[label] = i
+    return labels_dict
+
 
 def rescale_yolo_labels(labels, img_shape):
     """
@@ -129,6 +140,60 @@ def roi_box(points):
         if y_right < p[1]:
             y_right = p[1]
     return x_left, y_left, x_right, y_right
+
+def random_add_patches_in(fg_img_shape, bg_labels, bg_img_shape, roi_points, cl=1, scalebox=1, iou_thresh=0):
+    """
+    随机生成预选框
+    :param fg_img_shape:前景图shape
+    :param bg_labels: 背景图标签
+    :param bg_img_shape: 背景图shape
+    :param roi_points: 背景图选框
+    :param scalebox: 比例
+    :param iou_thresh: 两个方框相交面积参数
+    :return:
+    """
+    fg_img_h, fg_img_w, fg_img_c = fg_img_shape
+    fg_img_h = scalebox * fg_img_h
+    fg_img_w = scalebox * fg_img_w
+    bg_img_h, bg_img_w, bg_img_c = bg_img_shape
+    roi_rect = roi_box(roi_points.reshape(-1, 2).tolist())
+    success_num = 0
+    count = 0
+    new_bboxes = []
+
+    while success_num < 1:
+        if count == 10:
+            break
+
+        new_bbox_x_center, new_bbox_y_center = norm_sampling(roi_rect)
+        # 越界检查
+        if new_bbox_x_center - 0.5 * fg_img_w < 0 or new_bbox_x_center + 0.5 * fg_img_w > bg_img_w:
+            continue
+        if new_bbox_y_center - 0.5 * fg_img_h < 0 or new_bbox_y_center + 0.5 * fg_img_h > bg_img_h:
+            continue
+        if hp.point_in_roi(roi_points, (new_bbox_x_center, new_bbox_y_center)) != 1:
+            continue
+
+        new_bbox_x_left, new_bbox_y_left, new_bbox_x_right, new_bbox_y_right = new_bbox_x_center - 0.5 * fg_img_w, \
+                                                                               new_bbox_y_center - 0.5 * fg_img_h, \
+                                                                               new_bbox_x_center + 0.5 * fg_img_w, \
+                                                                               new_bbox_y_center + 0.5 * fg_img_h
+        new_bbox = [cl, int(new_bbox_x_left), int(new_bbox_y_left), int(new_bbox_x_right), int(new_bbox_y_right)]
+
+        ious_bg = [bbox_iou(new_bbox,bbox_bg) for bbox_bg in bg_labels]
+        ious_fg = [bbox_iou(new_bbox,bbox_fg) for bbox_fg in new_bboxes]
+        if ious_fg == []:
+            ious_fg.append(0)
+        if ious_bg == []:
+            ious_bg.append(0)
+        if max(ious_bg) <= iou_thresh and max(ious_fg) <= iou_thresh:
+            success_num +=1
+            new_bboxes.append(new_bbox)
+        else:
+            count += 1
+            continue
+   
+    return new_bboxes
 
 
 def random_add_patches(fg_img_shape, bg_labels, bg_img_shape, roi_points, cl=1, paste_number=1, iou_thresh=0):

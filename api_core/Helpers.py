@@ -92,8 +92,13 @@ def img_resize(image, area_max=2000, area_min=1000):
     return image
 
 
-def gaussian_blurImg(image):
-    # 高斯模糊
+def gaussian_blurImg(image,ran=0):
+    """高斯模糊"""
+    image = cv2.GaussianBlur(image,ksize=(3, 3), sigmaX=0, sigmaY=0)
+    return image
+
+def gaussian_blurImg_r(image):
+    """随机高斯模糊"""
     ran = random.randint(0, 5)
     if ran % 2 == 1:
         image = cv2.GaussianBlur(image, ksize=(ran, ran), sigmaX=0, sigmaY=0)

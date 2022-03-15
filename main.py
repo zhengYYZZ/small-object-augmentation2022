@@ -1,15 +1,24 @@
+# from email import utils
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+
 import sys
 import os
 from configparser import ConfigParser
+import cv2
+import ToolsWidget
+import numpy as np
+from tqdm import tqdm
+
 import sys
 sys.path.append('api_core')
 from api_core import util
-import ToolsWidget
+from api_core import Helpers as hp
+from api_core import augment as aug
+from api_core import xmlcontrol as voc_xml
 
-label_name = {}
+classes_name = util.read_classes_txt('data/predefined_classes.txt')
 
 
 class advancedWidget(QDialog):
@@ -149,6 +158,7 @@ class MainWidget(QWidget):
         # 设置标志序号
         self.prospectLabel = QLabel('设置贴图标签:')
         self.prospectComboBox = QComboBox()
+        self.prospectComboBox.currentIndexChanged.connect(lambda: self.selectionchange())
         self.customLabel = QLabel('自定义标签:')
         self.customEdit = QLineEdit()
         self.isCustomCheckBox = QCheckBox('是否使用自定义标签')
@@ -232,6 +242,15 @@ class MainWidget(QWidget):
             self.isCustomCheckBox.setChecked(True)
         self.customEdit.setText(config.get('label','custom'))
 
+        # 下拉框添加classes
+        global classes_name
+        for key in classes_name:
+            # print(key)
+            self.prospectComboBox.addItem(key)
+
+    def selectionchange(self):
+        print(f'{self.prospectComboBox.currentText()}')
+
     def open_train_btn(self):
         # 设置背景图片
         dir_name = QFileDialog.getExistingDirectory(self,"请选择背景图片路径")
@@ -272,6 +291,63 @@ class MainWidget(QWidget):
     def open_Aug_img_btn(self):
         # 合成图片
         self.write_ini()
+
+        save_dir, bg_img_dir, bg_label_dir, fg_img_dir = self.set_path('data/train.txt','data/small.txt','save')
+        box = self.draw_background_batch(bg_img_dir)
+        i=0
+        # 读取config.ini
+        config = ConfigParser()
+        config.read("config.ini")
+        numitem = config.getint("advanced","numitem")
+        iscustom = config.getint("label","iscustom")
+        custom = 'car'
+        if iscustom == 1:
+            custom = config.get("label","custom")
+        else:
+            custom = self.prospectComboBox.currentText()
+
+        for k in range(numitem):
+            for bb, bg_label in tqdm(zip(box, bg_label_dir)):
+                img,label = aug.synthetic_image(bb[0],bg_label,bb[1],fg_img_dir,custom)
+                label_xml_name = os.path.join(save_dir,
+                                         os.path.basename(bb[0].replace('.jpg', '_augment' + str(i) + '.xml')))
+                img_file_name = os.path.join(save_dir,
+                                         os.path.basename(bb[0].replace('.jpg', '_augment' + str(i) + '.jpg')))
+                cv2.imwrite(img_file_name, img)
+                voc_xml.creat_xml(label_xml_name,label,img_file_name,img.shape)
+                i+=1
+                
+
+    def set_path(self,bg='data/train.txt',fg='data/small.txt',save_path='save'):
+        '''
+
+        :param bg:
+        :param fg:
+        :param save_path:
+        :return: save_base_dir=保存文件夹,img_dir=背景图path,labels_xml=背景图标签,small_img_dir=前景图path
+        '''
+        base_dir = os.getcwd()
+        save_base_dir = os.path.join(base_dir,save_path)
+        util.check_dir(save_base_dir)
+        img_dir = [f.strip() for f in open(os.path.join(base_dir, bg),encoding='utf-8').readlines()]  # 读取train.txt文件内容，背景图片
+        label_xml = []
+        for img_p in img_dir:
+            label_xml.append(img_p.replace('.jpg','.txt'))
+        small_img_dir = [f.strip() for f in open(os.path.join(base_dir, fg),encoding='utf-8').readlines()]  # 读取small.txt文件内容，前景图片
+        return save_base_dir, img_dir, label_xml, small_img_dir
+
+    def draw_background_batch(self,path_list):
+        box_list = []
+        box = path_list[0]
+        # img = cv2.imread(box)
+        img = cv2.imdecode(np.fromfile(box,dtype=np.uint8),1) # 支持中文路径
+        img_h,img_w,_ = img.shape
+        img = cv2.resize(img,(img_w//2,img_h//2))
+        roi = hp.draw_roi(img)
+        roi = roi*2
+        for back_img_path in path_list:
+            box_list.append([back_img_path,roi])
+        return box_list
 
     def writeTxt(self,file_name,text_list):
         with open(file_name,'w',encoding='utf-8') as f:

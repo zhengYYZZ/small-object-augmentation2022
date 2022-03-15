@@ -1,9 +1,11 @@
 import random
-
+import os
+from configparser import ConfigParser
 import cv2
 import numpy as np
 import Helpers as hp
 import util
+import xmlcontrol as voc_xml
 
 
 def flip_bbox(roi):
@@ -51,15 +53,73 @@ def save_label_txt(img_shape, img_label, save_file):
         label_yolo = util.convert((width, height), label_box)
         label_file.write(str(target_id) + " " + " ".join([str(a) for a in label_yolo]) + '\n')
 
-
-def synthetic_img(bg_img_path, bg_label_path, bg_roi_points, fg_img_path, num=1):
+def synthetic_image(bg_img_path,bg_label_path,bg_roi_points,fg_img_paths,fg_img_label):
     '''
     合成图片
     :param bg_img_path: 背景图
     :param bg_label_path: 背景图标签
     :param bg_roi_points: 感兴趣域
-    :param fg_img_path: 前景图片集
-    :param num: 生成前景数量
+    :param fg_img_paths: 前景图片集
+    :param fg_img_label: 贴上前景标签
+    :return: 合成图片,合成图片xml_lable
+    '''
+
+    config = ConfigParser()
+    config.read("config.ini")
+    num = config.getint('advanced','imgnum') # 贴图前景数量
+    scalebox = config.getfloat('advanced','scalebox') # 前景标签框缩放比例
+    iou = config.getfloat('advanced','iou') # 相交系数
+    gaussianblur = config.getint('advanced','gaussianblur')
+    noise = config.getint('advanced','noise')
+    isseamlessclone = config.getint('advanced','isseamlessclone')
+    min_size = config.getint('imageSize','min')
+    max_size = config.getint('imageSize','max')
+    classes_name = util.read_classes_txt('data/predefined_classes.txt')
+
+    bg_img = cv2.imdecode(np.fromfile(bg_img_path,dtype=np.uint8),1) # 支持中文路径
+    bg_label_path = os.path.splitext(bg_img_path)[0]+'.xml'
+    bg_label = voc_xml.read_xml(bg_label_path)
+
+    for i in range(num):
+        fg_file = hp.rand_list(fg_img_paths)  
+        fg_img = cv2.imdecode(np.fromfile(fg_file,dtype=np.uint8),1) # 支持中文路径
+        fg_img = hp.img_resize(fg_img, max_size,min_size)
+        fg_img = hp.gaussian_blurImg(fg_img,gaussianblur)
+        new_bboxes = util.random_add_patches_in(fg_img.shape,bg_label,bg_img.shape,bg_roi_points,classes_name.get(fg_img_label,100),scalebox,iou)
+
+        for count,new_bbox in enumerate(new_bboxes):
+            cl, bbox_left, bbox_top, bbox_right, bbox_bottom = fg_img_label, new_bbox[1], new_bbox[2], new_bbox[3], \
+                                                               new_bbox[4]
+            height, width, channels = fg_img.shape
+            height = scalebox * height
+            width = scalebox * width
+            center = (int(width / 2), int(height / 2))
+            mask = 255 * np.ones(fg_img.shape, fg_img.dtype)
+            try:
+                if count > 1:
+                    fg_img = flip_bbox(fg_img)
+                if isseamlessclone==1:
+                    # 泊松融合
+                    bg_img[bbox_top:bbox_bottom, bbox_left:bbox_right] = cv2.seamlessClone(fg_img,
+                                                                                        bg_img[bbox_top:bbox_bottom,
+                                                                                        bbox_left:bbox_right],
+                                                                                        mask, center, cv2.NORMAL_CLONE)
+                else:
+                    bg_img[bbox_top:bbox_bottom, bbox_left:bbox_right] = fg_img     # 普通融合
+                bg_label.append([fg_img_label, new_bbox[1], new_bbox[2], new_bbox[3],new_bbox[4]])
+            except ValueError:
+                print("valueError")
+                continue
+    return bg_img, bg_label
+
+
+def synthetic_img(bg_img_path, bg_label_path, bg_roi_points, fg_img_paths, num=1):
+    '''
+    合成图片
+    :param bg_img_path: 背景图
+    :param bg_label_path: 背景图标签
+    :param bg_roi_points: 感兴趣域
+    :param fg_img_paths: 前景图片集
     :return: 合成图片,合成图片lable
     '''
     # bg_img = cv2.imread(bg_img_path)
@@ -72,7 +132,7 @@ def synthetic_img(bg_img_path, bg_label_path, bg_roi_points, fg_img_path, num=1)
         all_boxes.append(rescale_label)
 
     for i in range(num):
-        fg_file = hp.rand_list(fg_img_path)
+        fg_file = hp.rand_list(fg_img_paths)
         # fg_img = cv2.imread(fg_file)
         fg_img = cv2.imdecode(np.fromfile(fg_file,dtype=np.uint8),1) # 支持中文路径
         # min_size = random.randint(800,1300)
