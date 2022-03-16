@@ -79,13 +79,16 @@ def synthetic_image(bg_img_path,bg_label_path,bg_roi_points,fg_img_paths,fg_img_
     bg_img = cv2.imdecode(np.fromfile(bg_img_path,dtype=np.uint8),1) # 支持中文路径
     bg_label_path = os.path.splitext(bg_img_path)[0]+'.xml'
     bg_label = voc_xml.read_xml(bg_label_path)
+    int_bg_label = []
+    for label,x1,y1,x2,y2 in bg_label:
+        int_bg_label.append([label,int(x1),int(y1),int(x2),int(y2)])
 
     for i in range(num):
         fg_file = hp.rand_list(fg_img_paths)  
         fg_img = cv2.imdecode(np.fromfile(fg_file,dtype=np.uint8),1) # 支持中文路径
         fg_img = hp.img_resize(fg_img, max_size,min_size)
         fg_img = hp.gaussian_blurImg(fg_img,gaussianblur)
-        new_bboxes = util.random_add_patches_in(fg_img.shape,bg_label,bg_img.shape,bg_roi_points,classes_name.get(fg_img_label,100),scalebox,iou)
+        new_bboxes = util.random_add_patches_in(fg_img.shape,int_bg_label,bg_img.shape,bg_roi_points,classes_name.get(fg_img_label,100),scalebox,iou)
 
         for count,new_bbox in enumerate(new_bboxes):
             cl, bbox_left, bbox_top, bbox_right, bbox_bottom = fg_img_label, new_bbox[1], new_bbox[2], new_bbox[3], \

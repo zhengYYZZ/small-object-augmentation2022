@@ -42,7 +42,7 @@ def draw_roi(img):
     roi_point = np.array(temp)
     cv2.polylines(img, roi_point, 1, 255)
     cv2.imshow("imageROI", img)
-    cv2.waitKey(0)
+    cv2.waitKey(10)
     return roi_point
 
 
@@ -94,7 +94,10 @@ def img_resize(image, area_max=2000, area_min=1000):
 
 def gaussian_blurImg(image,ran=0):
     """高斯模糊"""
-    image = cv2.GaussianBlur(image,ksize=(3, 3), sigmaX=0, sigmaY=0)
+    if ran == 0:
+        pass
+    else:
+        image = cv2.GaussianBlur(image,ksize=(ran, ran), sigmaX=0, sigmaY=0)
     return image
 
 def gaussian_blurImg_r(image):

@@ -1,4 +1,4 @@
-C:/Users/Administrator/Desktop/SmallObjectAugmentation/throw_win/throw3\19.jpg
-C:/Users/Administrator/Desktop/SmallObjectAugmentation/throw_win/throw3\c1.jpg
-C:/Users/Administrator/Desktop/SmallObjectAugmentation/throw_win/throw3\c3.jpg
-C:/Users/Administrator/Desktop/SmallObjectAugmentation/throw_win/throw3\d1.jpg
+/home/online/zyx/SmallObjectAugmentation/throw/throw4/19.jpg
+/home/online/zyx/SmallObjectAugmentation/throw/throw4/c1.jpg
+/home/online/zyx/SmallObjectAugmentation/throw/throw4/c3.jpg
+/home/online/zyx/SmallObjectAugmentation/throw/throw4/d1.jpg

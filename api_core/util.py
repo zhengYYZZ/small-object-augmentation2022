@@ -129,6 +129,7 @@ def norm_sampling(search_space):
 
 def roi_box(points):
     # 四边形外接矩形
+    print(f'debug{points}')
     x_left, y_left, x_right, y_right = points[0][0], points[0][1], 0, 0
     for p in points:
         if x_left > int(p[0]):

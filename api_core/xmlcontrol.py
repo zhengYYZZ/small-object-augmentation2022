@@ -270,7 +270,7 @@ def creat_xml(filename, shapes, imagePath, imageShape):
     """
     创建xml
     :param filename: xml file path
-    :param shapes: box [['label',x1,y1,w,h]...]
+    :param shapes: box [['label',x1,y1,x2,y2]...]
     :param imagePath: img file path
     :param imageShape: img shape
     """
@@ -284,7 +284,10 @@ def creat_xml(filename, shapes, imagePath, imageShape):
 
     for shape in shapes:
         label = shape[0]
-        points = [shape[1], shape[2], shape[1] + shape[3], shape[2] + shape[4]]
+        if type(shape[1]) == type(''):
+            points = [int(shape[1]), int(shape[2]), int(shape[3]), int(shape[4])]
+        else:
+            points = [shape[1], shape[2], shape[3], shape[4]]
         bndbox = convertPoints2BndBox(points)
         difficult = 1
         writer.addBndBox(bndbox[0], bndbox[1], bndbox[2], bndbox[3], label, difficult)
