@@ -1,4 +1,4 @@
-/home/online/zyx/SmallObjectAugmentation/throw/throw4/19.jpg
-/home/online/zyx/SmallObjectAugmentation/throw/throw4/c1.jpg
-/home/online/zyx/SmallObjectAugmentation/throw/throw4/c3.jpg
-/home/online/zyx/SmallObjectAugmentation/throw/throw4/d1.jpg
+/home/online/zyx/old/small-object-augmentation2022/throw4/19.jpg
+/home/online/zyx/old/small-object-augmentation2022/throw4/c1.jpg
+/home/online/zyx/old/small-object-augmentation2022/throw4/c3.JPG
+/home/online/zyx/old/small-object-augmentation2022/throw4/d1.png

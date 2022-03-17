@@ -398,8 +398,9 @@ class MainWidget(QWidget):
         if dir_name != '':
             files = os.listdir(dir_name)
             for file_path in files:
-                if os.path.splitext(file_path)[1] == '.jpg':
-                    files_list.append(os.path.join(dir_name, file_path))
+                # if os.path.splitext(file_path)[1] == '.jpg':
+                #     files_list.append(os.path.join(dir_name, file_path))
+                files_list.append(os.path.join(dir_name, file_path))
             files_list.sort()
             print(files_list)
             self.writeTxt('data/small.txt', files_list)
@@ -444,8 +445,13 @@ class MainWidget(QWidget):
                                              os.path.basename(bb[0].replace('.jpg', '_augment' + str(i) + '.jpg')))
                 cv2.imwrite(img_file_name, img)
                 voc_xml.creat_xml(label_xml_name, label, img_file_name, img.shape)
-                self.pbar.setValue((i+1)/(len(box)*numitem)*100)  # 更新进度条
+                self.pbar.setValue(int((i+1)/(len(box)*numitem)*100))  # 更新进度条
                 i += 1
+
+                # look
+                cv2.imshow('lookimg',img)
+                cv2.waitKey(1)
+
 
     def set_path(self, bg='data/train.txt', fg='data/small.txt', save_path='save'):
         '''
