@@ -78,7 +78,11 @@ def synthetic_image(bg_img_path,bg_label_path,bg_roi_points,fg_img_paths,fg_img_
 
     bg_img = cv2.imdecode(np.fromfile(bg_img_path,dtype=np.uint8),1) # 支持中文路径
     bg_label_path = os.path.splitext(bg_img_path)[0]+'.xml'
-    bg_label = voc_xml.read_xml(bg_label_path)
+    if os.path.isfile(bg_label_path):
+        bg_label = voc_xml.read_xml(bg_label_path)
+    else:
+        print(f'文件不存在{bg_label_path}')
+        bg_label = []
     int_bg_label = []
     for label,x1,y1,x2,y2 in bg_label:
         int_bg_label.append([label,int(x1),int(y1),int(x2),int(y2)])
@@ -88,14 +92,12 @@ def synthetic_image(bg_img_path,bg_label_path,bg_roi_points,fg_img_paths,fg_img_
         fg_img = cv2.imdecode(np.fromfile(fg_file,dtype=np.uint8),1) # 支持中文路径
         fg_img = hp.img_resize(fg_img, max_size,min_size)
         fg_img = hp.gaussian_blurImg(fg_img,gaussianblur)
-        new_bboxes = util.random_add_patches_in(fg_img.shape,int_bg_label,bg_img.shape,bg_roi_points,classes_name.get(fg_img_label,100),scalebox,iou)
+        new_bboxes = util.random_add_patches_in(fg_img.shape,int_bg_label,bg_img.shape,bg_roi_points,classes_name.get(fg_img_label,100),iou)
 
         for count,new_bbox in enumerate(new_bboxes):
             cl, bbox_left, bbox_top, bbox_right, bbox_bottom = fg_img_label, new_bbox[1], new_bbox[2], new_bbox[3], \
                                                                new_bbox[4]
             height, width, channels = fg_img.shape
-            height = scalebox * height
-            width = scalebox * width
             center = (int(width / 2), int(height / 2))
             mask = 255 * np.ones(fg_img.shape, fg_img.dtype)
             try:
@@ -109,7 +111,13 @@ def synthetic_image(bg_img_path,bg_label_path,bg_roi_points,fg_img_paths,fg_img_
                                                                                         mask, center, cv2.NORMAL_CLONE)
                 else:
                     bg_img[bbox_top:bbox_bottom, bbox_left:bbox_right] = fg_img     # 普通融合
-                bg_label.append([fg_img_label, new_bbox[1], new_bbox[2], new_bbox[3],new_bbox[4]])
+                 # label 比例
+                center_x = (new_bbox[1]+new_bbox[3])//2
+                center_y = (new_bbox[2]+new_bbox[4])//2
+                new_bg_w = abs(new_bbox[1]-new_bbox[3]) * scalebox //2
+                new_bg_h = abs(new_bbox[2]-new_bbox[4]) * scalebox //2
+                # bg_label.append([fg_img_label, new_bbox[1], new_bbox[2], new_bbox[3],new_bbox[4]])
+                bg_label.append([fg_img_label, center_x-new_bg_w, center_y-new_bg_h, center_x+new_bg_w, center_y+new_bg_h])
             except ValueError:
                 print("valueError")
                 continue

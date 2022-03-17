@@ -1,4 +1,3 @@
-# from email import utils
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -6,12 +5,11 @@ from PyQt5.QtGui import *
 import os
 from configparser import ConfigParser
 import cv2
-import ToolsWidget
 import numpy as np
 from tqdm import tqdm
+import json
 
 import sys
-
 sys.path.append('api_core')
 from api_core import util
 from api_core import Helpers as hp
@@ -28,16 +26,22 @@ class advancedWidget(QDialog):
 
         self.numItem_label = QLabel('循环次数:')
         self.numItem_edit = QLineEdit()
+        self.numItem_edit.setValidator(QIntValidator())
         self.imgNum_label = QLabel('贴图数量:')
         self.imgNum_edit = QLineEdit()
+        self.imgNum_edit.setValidator(QIntValidator())
         self.scaleBox_label = QLabel('标签框比例(0.8~1.5):')
         self.scaleBox_edit = QLineEdit()
+        self.scaleBox_edit.setValidator(QDoubleValidator())
         self.iou_label = QLabel('标签框相交系数(0~1):')
         self.iou_edit = QLineEdit()
+        self.iou_edit.setValidator(QDoubleValidator())
         self.GaussianBlur_label = QLabel('高斯模糊(0或单数):')
         self.GaussianBlur_edit = QLineEdit()
+        self.GaussianBlur_edit.setValidator(QIntValidator())
         self.noise_label = QLabel('高斯噪声:')
         self.noise_edit = QLineEdit()
+        self.noise_edit.setValidator(QIntValidator())
         self.isSeamlessClone_check = QCheckBox('启用泊松融合')
         self.default_btn = QPushButton('恢复默认设置')
         self.default_btn.clicked.connect(lambda: self.default_click())
@@ -113,6 +117,111 @@ class advancedWidget(QDialog):
         self.close()
 
 
+class sizeDlg(QDialog):
+    def __init__(self):
+        super().__init__()
+
+        self.comboBox = QComboBox()
+        self.comboBox.currentIndexChanged.connect(lambda: self.selecLabel())
+        self.l_label = QLabel('备注:')
+        self.l_edit = QLineEdit()
+        self.max_label = QLabel('max:')
+        self.max_edit = QLineEdit()
+        self.max_edit.setValidator(QIntValidator())
+        self.min_label = QLabel('min')
+        self.min_edit = QLineEdit()
+        self.min_edit.setValidator(QIntValidator())
+        self.add_btn = QPushButton('添加/修改')
+        self.add_btn.clicked.connect(lambda: self.add_click())
+        self.delete_btn = QPushButton('删除')
+        self.delete_btn.clicked.connect(lambda: self.delete_click())
+        self.use_btn = QPushButton('使用该预设')
+        self.use_btn.clicked.connect(lambda : self.use_click())
+
+        self.main_gird = QGridLayout(self)
+        self.main_gird.addWidget(self.comboBox,0,0,1,2)
+        self.main_gird.addWidget(self.l_label,1,0)
+        self.main_gird.addWidget(self.l_edit,1,1)
+        self.main_gird.addWidget(self.min_label,2,0)
+        self.main_gird.addWidget(self.min_edit,2,1)
+        self.main_gird.addWidget(self.max_label,3,0)
+        self.main_gird.addWidget(self.max_edit,3,1)
+        self.main_gird.addWidget(self.add_btn,4,0)
+        self.main_gird.addWidget(self.delete_btn,4,1)
+        self.main_gird.addWidget(self.use_btn,5,0,1,2)
+
+        self._data_dict = {}
+        self.isUse = False
+        self.res_init()
+
+    def res_init(self):
+        self._data_dict.clear()
+        with open('data/YuSheSize.json','r+') as f:
+            json_load = json.load(f)
+            self._data_dict = json.loads(json_load)
+
+        self.comboBox.clear()
+        for key,value in self._data_dict.items():
+            print(key)
+            print(value)
+            self.comboBox.addItem(f'{key} {value}')
+
+    def selecLabel(self):
+        # 下拉框
+        combox_str = self.comboBox.currentText()
+        if not combox_str == '':
+            min_str = self._data_dict[combox_str.split(' ')[0]][0]
+            max_str = self._data_dict[combox_str.split(' ')[0]][1]
+            self.l_edit.setText(combox_str.split(' ')[0])
+            self.min_edit.setText(f'{min_str}')
+            self.max_edit.setText(f'{max_str}')
+        else:
+            self.l_edit.setText('')
+            self.min_edit.setText('')
+            self.max_edit.setText('')
+
+    def add_click(self):
+        label_str = self.l_edit.text()
+        max_str = self.max_edit.text()
+        min_str = self.min_edit.text()
+        if label_str == '':
+            QMessageBox.warning(self,'warning','数据不规范',QMessageBox.Ok)
+            return
+
+        self._data_dict[label_str] = [int(min_str),int(max_str)]
+        with open('data/YuSheSize.json','w+') as f:
+            json_str = json.dumps(self._data_dict)
+            json.dump(json_str,f)
+        self.res_init()
+
+    def delete_click(self):
+        label_str = self.l_edit.text()
+        if label_str == '' or len(self._data_dict)==0:
+            QMessageBox.warning(self,'error','无数据可删除',QMessageBox.Ok)
+            return
+
+        self._data_dict.pop(label_str)
+        with open('data/YuSheSize.json','w+') as f:
+            json_str = json.dumps(self._data_dict)
+            json.dump(json_str,f)
+        self.res_init()
+    
+    def use_click(self):
+        self.isUse = True
+        self.close()
+
+    def is_use(self):
+        return self.isUse
+
+    def get_min_max(self):
+        min_str = self.min_edit.text()
+        max_str = self.max_edit.text()
+        if min_str=='' or max_str=='':
+            return '100','1000'
+        return min_str,max_str
+
+
+
 class MainWidget(QWidget):
     def __init__(self):
         super().__init__()
@@ -140,10 +249,12 @@ class MainWidget(QWidget):
         self.minLabel = QLabel('min:')
         self.maxLabel = QLabel('max:')
         self.minEdit = QLineEdit()
+        self.minEdit.setValidator(QIntValidator())
         self.maxEdit = QLineEdit()
+        self.maxEdit.setValidator(QIntValidator())
         self.testshow_btn = QPushButton('查看贴图大小')
         self.testshow_btn.clicked.connect(lambda: self.testshow_btn_click())
-        self.Tools_btn = QPushButton('工具')
+        self.Tools_btn = QPushButton('预设前景大小')
         self.Tools_btn.clicked.connect(lambda: self.tools_btn_clicked())
         self.grid_size = QGridLayout()
         self.grid_size.addWidget(self.minLabel, 1, 0)
@@ -299,9 +410,13 @@ class MainWidget(QWidget):
         awidget.exec_()
 
     def tools_btn_clicked(self):
-        # 工具
-        dlg = ToolsWidget.ToolsQDialog()
+        # 预设
+        dlg = sizeDlg()
         dlg.exec_()
+        if dlg.is_use():
+            min_str,max_str = dlg.get_min_max()
+            self.minEdit.setText(min_str)
+            self.maxEdit.setText(max_str)
 
     def open_Aug_img_btn(self):
         # 合成图片
@@ -315,7 +430,6 @@ class MainWidget(QWidget):
         config.read("config.ini")
         numitem = config.getint("advanced", "numitem")
         iscustom = config.getint("label", "iscustom")
-        custom = 'car'
         if iscustom == 1:
             custom = config.get("label", "custom")
         else:
