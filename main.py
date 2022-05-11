@@ -431,17 +431,22 @@ class MainWidget(QWidget):
         config.read("config.ini")
         numitem = config.getint("advanced", "numitem")
         iscustom = config.getint("label", "iscustom")
+        l_count = config.getint("label","count")
         if iscustom == 1:
             custom = config.get("label", "custom")
         else:
             custom = self.prospectComboBox.currentText()
 
+        # 创建文件夹
+        save_dir_count = os.path.join(save_dir,f'{custom}_{l_count}')
+        util.check_dir(save_dir_count)
+
         for k in range(numitem):
             for bb, bg_label in tqdm(zip(box, bg_label_dir)):
                 img, label = aug.synthetic_image(bb[0], bg_label, bb[1], fg_img_dir, custom)
-                label_xml_name = os.path.join(save_dir,
+                label_xml_name = os.path.join(save_dir_count,
                                               os.path.basename(bb[0].replace('.jpg', '_augment' + str(i) + '.xml')))
-                img_file_name = os.path.join(save_dir,
+                img_file_name = os.path.join(save_dir_count,
                                              os.path.basename(bb[0].replace('.jpg', '_augment' + str(i) + '.jpg')))
                 cv2.imwrite(img_file_name, img)
                 voc_xml.creat_xml(label_xml_name, label, img_file_name, img.shape)
@@ -451,6 +456,15 @@ class MainWidget(QWidget):
                 # look
                 cv2.imshow('lookimg',img)
                 cv2.waitKey(1)
+                
+        l_count += 1
+        if l_count == 65535:
+            l_count = 0
+        # 计数写入
+        config2 = ConfigParser()
+        config2.read('config.ini')
+        config2.set("label","count",str(l_count))
+        config2.write(open('config.ini','w+'))
 
 
     def set_path(self, bg='data/train.txt', fg='data/small.txt', save_path='save'):

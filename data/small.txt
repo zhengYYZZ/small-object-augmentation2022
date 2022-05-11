@@ -1,4 +1,1 @@
-/home/online/zyx/old/small-object-augmentation2022/throw4/19.jpg
-/home/online/zyx/old/small-object-augmentation2022/throw4/c1.jpg
-/home/online/zyx/old/small-object-augmentation2022/throw4/c3.JPG
-/home/online/zyx/old/small-object-augmentation2022/throw4/d1.png
+C:/Users/Administrator/Desktop/small-object-augmentation2022/human/night\0000143_crop_49.jpg
