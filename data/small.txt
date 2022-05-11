@@ -1,1 +1,9 @@
-C:/Users/Administrator/Desktop/small-object-augmentation2022/human/night\0000143_crop_49.jpg
+C:/Users/Administrator/Desktop/small-object-augmentation2022/火\fire1.jpg
+C:/Users/Administrator/Desktop/small-object-augmentation2022/火\fire2.jpg
+C:/Users/Administrator/Desktop/small-object-augmentation2022/火\fire3.jpg
+C:/Users/Administrator/Desktop/small-object-augmentation2022/火\fire4.jpg
+C:/Users/Administrator/Desktop/small-object-augmentation2022/火\fire5.jpg
+C:/Users/Administrator/Desktop/small-object-augmentation2022/火\fire6.jpg
+C:/Users/Administrator/Desktop/small-object-augmentation2022/火\fire7.jpg
+C:/Users/Administrator/Desktop/small-object-augmentation2022/火\fire8.jpg
+C:/Users/Administrator/Desktop/small-object-augmentation2022/火\fire9.jpg
