@@ -454,7 +454,9 @@ class MainWidget(QWidget):
                 i += 1
 
                 # look
-                cv2.imshow('look-img',img)
+                img_h, img_w, _ = img.shape
+                img2 = cv2.resize(img,(img_w//2,img_h//2))
+                cv2.imshow('look-img',img2)
                 cv2.waitKey(1)
                 
         l_count += 1
