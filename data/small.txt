@@ -1,1 +1,2 @@
-C:/Users/Administrator/Desktop/small-object-augmentation2022/human/night\0000143_crop_49.jpg
+C:/Users/Administrator/Desktop/small-object-augmentation2022/car\1.jpg
+C:/Users/Administrator/Desktop/small-object-augmentation2022/car\2.jpg

@@ -312,7 +312,7 @@ class MainWidget(QWidget):
         self.main_grid.addLayout(self.h_box, 3, 0, 1, 2)
 
         # self.setFixedSize(500,300)
-        self.setWindowTitle('贴图工具')
+        self.setWindowTitle('SmallObjectAugmentation')
 
     def testshow_btn_click(self):
         # 查看图片大小
