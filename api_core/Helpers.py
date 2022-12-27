@@ -35,7 +35,7 @@ def draw_roi(img):
                         1.0, (0, 0, 0), thickness=1)
             cv2.imshow("imageROI", img)
 
-    cv2.namedWindow("imageROI")
+    cv2.namedWindow("imageROI",0)
     cv2.setMouseCallback("imageROI", on_EVENT_LBUTTONDOWN)
     cv2.imshow("imageROI", img)
     cv2.waitKey(0)

@@ -16,6 +16,8 @@ from api_core import Helpers as hp
 from api_core import augment as aug
 from api_core import xmlcontrol as voc_xml
 
+#os.environ.pop("QT_QPA_PLATFORM_PLUGIN_PATH")
+
 classes_name = util.read_classes_txt('data/predefined_classes.txt')
 
 
@@ -312,7 +314,7 @@ class MainWidget(QWidget):
         self.main_grid.addLayout(self.h_box, 3, 0, 1, 2)
 
         # self.setFixedSize(500,300)
-        self.setWindowTitle('SmallObjectAugmentation')
+        self.setWindowTitle('贴图工具')
 
     def testshow_btn_click(self):
         # 查看图片大小
@@ -333,6 +335,7 @@ class MainWidget(QWidget):
             img, _ = aug.synthetic_image(bb[0], bg_label, bb[1], fg_img_dir, custom)
             img_h, img_w, _ = img.shape
             img = cv2.resize(img,(img_w//2,img_h//2))
+            cv2.namedWindow('test',0)
             cv2.imshow('test',img)
             break
         cv2.waitKey(100)
@@ -448,6 +451,7 @@ class MainWidget(QWidget):
                                               os.path.basename(bb[0].replace('.jpg', '_augment' + str(i) + '.xml')))
                 img_file_name = os.path.join(save_dir_count,
                                              os.path.basename(bb[0].replace('.jpg', '_augment' + str(i) + '.jpg')))
+                print(img_file_name)
                 cv2.imwrite(img_file_name, img)
                 voc_xml.creat_xml(label_xml_name, label, img_file_name, img.shape)
                 self.pbar.setValue(int((i+1)/(len(box)*numitem)*100))  # 更新进度条
@@ -456,6 +460,7 @@ class MainWidget(QWidget):
                 # look
                 img_h, img_w, _ = img.shape
                 img2 = cv2.resize(img,(img_w//2,img_h//2))
+                cv2.namedWindow('look-img',0)
                 cv2.imshow('look-img',img2)
                 cv2.waitKey(1)
                 
